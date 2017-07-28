@@ -1,0 +1,43 @@
+function [ gradient ] = gradient( Vtot, dl, u_ni, u_ai, clalpha, ...
+    differentialArea, inducedVelocities, gamma, cl )
+
+% The function gradient computes the gradient of the residual function
+% using formula 11 of the Hunsaker-Snyder paper. This gradient will be used
+% in the Newton corrector step. 
+
+k = size(Vtot,1);
+gradient = zeros(k,k);
+w = zeros(k,3);
+v_ni = zeros(k,1);
+v_ai = zeros(k,1);
+
+for i = 1:k
+    w(i,:) = cross(Vtot(i,:),dl(i,:));
+    v_ni(i) = dot(Vtot(i,:),u_ni);
+    v_ai(i) = dot(Vtot(i,:),u_ai);
+end
+
+for i = 1:k
+    for j = 1:k
+        
+        if i == j
+            gradient(i,j) = 2*norm(w(i,:)) + ...
+                2*dot(w(i,:), cross(inducedVelocities{i,j},dl(i,:))) / ...
+                norm(w(i,:)) * gamma(i) ...
+                - norm(Vtot(i,:))^2 * differentialArea(i) * ...
+                clalpha*(v_ai(i)*dot(inducedVelocities{i,j}, u_ni) - ...
+                v_ni(i)*dot(inducedVelocities{i,j}, u_ai)) ...
+                /(v_ai(i)^2+v_ni(i)^2);
+        else
+            gradient(i,j) =  ...
+                2*dot(w(i,:), cross(inducedVelocities{i,j},dl(i,:))) / ...
+                norm(w(i,:)) * gamma(i) ...
+                - norm(Vtot(i,:))^2 * differentialArea(i) * ...
+                clalpha*(v_ai(i)*dot(inducedVelocities{i,j}, u_ni) - ...
+                v_ni(i)*dot(inducedVelocities{i,j}, u_ai)) ...
+                /(v_ai(i)^2+v_ni(i)^2);
+        end
+    end
+end
+
+end
